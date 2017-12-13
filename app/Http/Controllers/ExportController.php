@@ -3,6 +3,9 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\App;
+use App\Localization;
 use App\Factorie;
 use App\Printer;
 use App\Printing;
@@ -12,10 +15,33 @@ use App\Country;
 class ExportController extends Controller
 {
 	
+	function getLang($country)
+    {
+
+        $lang = Session::get('local');
+
+        if(empty($lang))
+        {
+            $lang = 'en';
+        }
+
+        $post['active'] = $lang;
+
+        //2 Локализации
+        $post['all'][1]['lang'] = 'en';
+        $post['all'][0]['lang'] = $country['lang'];
+        
+
+        App::setLocale($lang);
+
+        return $post;
+    }
+
     public function index(Request $request, $country)
     {
     	$country = Country::where('name','=', $country)
                  ->firstOrFail();
+         $getLang = $this->getLang($country);
         $factorie = Factorie::where('country_id',$country['id'])->get(); 
         $post['country'] = $country;
         $post['factorie'] = $factorie;
@@ -103,6 +129,7 @@ class ExportController extends Controller
         {
         	 return view('pages.export',[
 	    		'arResult' => $post,
+            	'allLocal' => $getLang,
 	    		]); 
         }
 

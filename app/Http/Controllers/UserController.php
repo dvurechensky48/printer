@@ -3,6 +3,10 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\App;
+use App\Helpers\Parser\Parse;
+use App\Localization;
 use App\Factorie;
 use App\Printer;
 use App\Printing;
@@ -11,10 +15,36 @@ use App\Country;
 
 class UserController extends Controller
 {
+	function getLang($country)
+    {
+    	
+
+        $lang = Session::get('local');
+
+        if(empty($lang))
+        {
+            $lang = 'en';
+        }
+
+        $post['active'] = $lang;
+
+        //2 Локализации
+        $post['all'][1]['lang'] = 'en';
+        $post['all'][0]['lang'] = $country['lang'];
+        
+
+        App::setLocale($lang);
+
+        return $post;
+    }
+
     public function index($country)
     {
+    	
+
     	$country = Country::where('name','=', $country)
                  ->firstOrFail();
+         $getLang = $this->getLang($country);
         $factorie = Factorie::where('country_id',$country['id'])->get(); 
         $post['country'] = $country;
         $post['factorie'] = $factorie;
@@ -22,6 +52,7 @@ class UserController extends Controller
 
         return view('pages.user',[
     		'arResult' => $post,
+            'allLocal' => $getLang,
     		]); 
     }
 
@@ -32,11 +63,29 @@ class UserController extends Controller
     		$value = json_decode($request->input('value'));
     		if(isset($value->user_name) and isset($value->date_before) and isset($value->date_after) and isset($value->region_id))
     		{
+
+
     			$printing = Printing::where('user_name',$value->user_name)
     					->where('factorie_id',$value->region_id)
     					->whereDate('created_at', '<=', $value->date_before)
     					->whereDate('created_at', '>=', $value->date_after)
     					->get();
+			}
+			else if(!isset($value->user_name) and isset($value->date_before) and isset($value->date_after) and isset($value->region_id))
+    		{
+    			$printing = Printing::where('factorie_id',$value->region_id)
+    					->whereDate('created_at', '<=', $value->date_before)
+    					->whereDate('created_at', '>=', $value->date_after)
+    					->get();
+			}
+    		else
+    		{
+    			$post['status'] = '0';
+	    		$post['error'] = 'Неправильно задана переменная';
+	    		echo json_encode($post);
+	    		return;
+    		}
+    			
 
 				if(count($printing) > 0)
 				{
@@ -45,6 +94,9 @@ class UserController extends Controller
 					$printers = array();
 					for($i=0;$i<count($printing);$i++)
 					{
+						//Обновить базу по принтерам
+						Parse::parsePrinter($printing[$i]['printer_id']);
+
 						if(!in_array($printing[$i]['printer_id'], $printers))
 						{
 							$arr = [
@@ -144,13 +196,7 @@ class UserController extends Controller
 		    		$post['error'] = 'Данные отсутвуют';
 		    		echo json_encode($post);
 				}
-    		}
-    		else
-    		{
-    			$post['status'] = '0';
-	    		$post['error'] = 'Неправильно задана переменная';
-	    		echo json_encode($post);
-    		}
+    		
     		
     	}
 	}

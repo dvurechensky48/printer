@@ -3,18 +3,45 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\App;
+use App\Helpers\Parser\Parse;
 use App\Factorie;
 use App\Printer;
 use App\Printing;
 use App\Continent;
 use App\Country;
 
+
 class PrinterController extends Controller
 {
+	function getLang($country)
+    {
+
+        $lang = Session::get('local');
+
+        if(empty($lang))
+        {
+            $lang = 'en';
+        }
+
+        $post['active'] = $lang;
+
+        //2 Локализации
+        $post['all'][1]['lang'] = 'en';
+        $post['all'][0]['lang'] = $country['lang'];
+        
+
+        App::setLocale($lang);
+
+        return $post;
+    }
+
     public function index($country)
     {
-    	$country = Country::where('name','=', $country)
+		$country = Country::where('name','=', $country)
                  ->firstOrFail();
+        $getLang = $this->getLang($country);
         $factorie = Factorie::where('country_id',$country['id'])->get(); 
         $post['country'] = $country;
         $post['factorie'] = $factorie;
@@ -22,7 +49,23 @@ class PrinterController extends Controller
 
         return view('pages.printer',[
     		'arResult' => $post,
+            'allLocal' => $getLang,
     		]); 
+    }
+
+    public function factorie(Request $request)
+    {
+    	if($request->input('value'))
+    	{
+    		$post = array();
+    		$printer = Printer::where('factorie_id',$request->input('value'))
+    					->get();
+			for ($i=0; $i < count($printer); $i++) { 
+				$post['printer'][$i]['printer_name'] = $printer[$i]['printer_name'];
+				$post['printer'][$i]['id'] = $printer[$i]['id'];
+			}
+			echo json_encode($post);
+    	}
     }
 
     public function info(Request $request,$country)
@@ -30,10 +73,36 @@ class PrinterController extends Controller
     	if($request->input('value'))
     	{
     		$value = json_decode($request->input('value'));
-    		$printing = Printing::where('printer_id',$value->printer_id)
-    					->whereDate('created_at', '<=', $value->date_before)
-    					->whereDate('created_at', '>=', $value->date_after)
-    					->get();
+    		if(isset($value->printer_id) and isset($value->date_before) and isset($value->date_after) and isset($value->region_id) and $value->region_id != 'none')
+    		{
+
+    			//Обновить базу по принтерам
+    			Parse::parsePrinter($value->printer_id);
+
+    			$printing = Printing::where('printer_id',$value->printer_id)
+	    					->where('factorie_id',$value->region_id)
+	    					->whereDate('created_at', '<=', $value->date_before)
+	    					->whereDate('created_at', '>=', $value->date_after)
+	    					->get();
+
+    		}
+    		else if(!isset($value->printer_id) and isset($value->date_before) and isset($value->date_after) and isset($value->region_id))
+    		{
+
+    			$printing = Printing::where('factorie_id',$value->region_id)
+    						->whereDate('created_at', '<=', $value->date_before)
+	    					->whereDate('created_at', '>=', $value->date_after)
+	    					->get();
+
+				
+    		}
+    		else if($value->region_id == 'none')
+    		{
+    			$post['status'] = '0';
+	    		$post['error'] = 'Choose region';
+	    		return json_encode($post);
+    		}
+    		
 			if(count($printing) > 0)
 			{
 				$post['status'] = '1';
@@ -113,14 +182,14 @@ class PrinterController extends Controller
 			else
 			{
 				$post['status'] = '0';
-	    		$post['error'] = 'Данных нет';
+	    		$post['error'] = 'No data available';
 	    		echo json_encode($post);
 			}
     	}
     	else
     	{
     		$post['status'] = '0';
-    		$post['error'] = 'Неправильно задана переменная';
+    		$post['error'] = 'The variable is not correctly set';
     		echo json_encode($post);
     	}
     	
