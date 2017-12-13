@@ -65,6 +65,8 @@ class ExportController extends Controller
     		$post = array();
     		$users = array();
     		$printers = array();
+
+
     		for($i=0;$i<count($printing);$i++)
     		{
     			if(!in_array($printing[$i]['user_name'], $users) or !in_array($printing[$i]['printer_id'], $printers))
@@ -109,10 +111,12 @@ class ExportController extends Controller
 			header("Expires: 0");
 			$out = fopen('php://output', 'w');
 			
-			fputcsv($out,array('Printer name','User name','Amount','Created at'));
+			fputcsv($out,array('Printer name','User name','Amount','Date','Clock'));
 			for($i=0;$i<count($post);$i++)
 			{
-				fputcsv($out,array($post[$i]['printer_id'],$post[$i]['user_name'],$post[$i]['amount'],$post[$i]['created_at']));
+                $arrDate = explode(' ', trim($post[$i]['created_at']));
+
+				fputcsv($out,array($post[$i]['printer_id'],$post[$i]['user_name'],$post[$i]['amount'],$arrDate[0],$arrDate[1]));
 
 			}
 			

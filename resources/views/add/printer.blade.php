@@ -19,7 +19,7 @@
 									    <option selected disabled>Выберите в какой завод добавить</option>
 									    @if(!empty($arResult['factorie']))
 										    @foreach($arResult['factorie'] as $post)
-										    <option value="{{ $post['id'] }}">Название: {{ $post['name'] }}, Локация: {{ $post['location'] }}</option>
+										    <option value="{{ $post['id'] }}">{{ $post['location'] }}</option>
 										    @endforeach
 									    @endif
 								   </select>

@@ -39,6 +39,10 @@ class PrinterController extends Controller
 
     public function index($country)
     {
+    	
+
+
+
 		$country = Country::where('name','=', $country)
                  ->firstOrFail();
         $getLang = $this->getLang($country);

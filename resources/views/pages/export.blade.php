@@ -81,10 +81,13 @@
 
 
 <script type="text/javascript">
-	$(function () {                
+	$(function () {     
+		var month = moment().get('month') + 1;  
+    	var year = moment().get('year');  
+	           
 	  $('#datetimepicker-after').datetimepicker({
-	  	defaultDate: moment(-1,'day'),
-	  	format: 'YYYY-MM-DD'
+	  	format: 'YYYY-MM-DD',
+	  	defaultDate: year+'-'+month+'-01'
 	  });
 
 	  $('#datetimepicker-before').datetimepicker({

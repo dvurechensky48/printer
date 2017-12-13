@@ -14,6 +14,16 @@
 						</div>
 						<div class="col-xs-9">
 							<div>
+									<select name="country_id" class="form-control" required>
+									    <option selected disabled>Выберите в какую страну</option>
+									    @if(!empty($arResult['country']))
+										    @foreach($arResult['country'] as $post)
+										    <option value="{{ $post['id'] }}">{{ $post['name'] }}</option>
+										    @endforeach
+									    @endif
+								   </select>
+								</div>
+							<div class="margin-top-2">
 								<input class="form-control" type="text" name="name" placeholder="Название завода" required>
 							</div>
 							<div class="margin-top-2">

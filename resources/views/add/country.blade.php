@@ -7,7 +7,7 @@
 		<div class="row">
 			<h2 class="all-center">Добавить страну</h2>	
 			<div class="margin-top-4">
-				<form method="get">
+				<form method="post" enctype="multipart/form-data">
 					<div class="row">
 						<div class="col-xs-3">
 							<div>Колличество зарегестрированных стран: <span class="badge">{{ $arResult['count_country'] }}</span></div>
@@ -37,7 +37,8 @@
 							</div>
 							<div class="margin-top-2">
 								<h3>Флаг</h3>
-								<input class="form-control" type="file" name="flag" placeholder="Место положения" required>
+								<input class="form-control" type="file" name="flag" required>
+								<input type="hidden" value="{!! csrf_token() !!}" name="_token">
 							</div>
 
 							<div class="margin-top-2 all-center">
